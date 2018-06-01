@@ -49,4 +49,10 @@ is incomplete
 ****************************
 GitHub: https://github.com/cshyami/ticketing
 
+Steps to run:
+1. Clone the project: git clone https://github.com/cshyami/ticketing
+2. Navigate to the directory to the project
+3. mvn clean package -DskipTests
+4. Navigate to target directory
+5. Run the Spring Boot App: java -jar ticketing-0.0.1-SNAPSHOT.jar
 
