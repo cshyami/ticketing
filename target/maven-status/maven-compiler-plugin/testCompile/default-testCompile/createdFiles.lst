@@ -1,0 +1,5 @@
+com\wm\ticketing\AppTest.class
+com\wm\ticketing\TicketServiceTest.class
+com\wm\ticketing\service\ServiceTestConfig.class
+com\wm\ticketing\TicketServiceImplTest.class
+com\wm\ticketing\TicketServiceImplTest$TicketServiceImplTestContextConfiguration.class

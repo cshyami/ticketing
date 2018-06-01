@@ -2,9 +2,12 @@ package com.wm.ticketing.repository;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,35 +31,52 @@ public class SeatHoldRepository {
 	@Autowired
 	private UserRepository userRepository;
 	
-	List<SeatHold> listSeatHolds;
+	@Autowired
+	private SeatRepository seatRepository;
+	
+	ArrayList<SeatHold> listSeatHolds;
 	final Long seatHoldExpireTime=60L;	// default
-	int holdId=4;
+	int holdId=3;
 	int confirmationId=1;
 	
 	@PostConstruct
 	private void setupData() {
+		
 		//Setup mock SeatHold records. Records will be retrieved from db in real world scenario
-
+		List<Seat> seats;
+		
 		SeatHold hold1=new SeatHold(1, 1, Instant.now());
 		hold1.setUser(userRepository.getUserById(1));
 		hold1.setZone(zoneRepository.getZoneById(1));
+		seats=seatRepository.getSeats(1, 1);
+		seats.forEach(s -> s.setStatus(Status.HOLD));
+		hold1.setSeats(seats);
 		//zoneRepository.getZoneById(1).setAvailableSeatId(2);
 
 		SeatHold hold2=new SeatHold(2, 2,Instant.now().plusSeconds(60));
 		hold2.setUser(userRepository.getUserById(2));
 		hold2.setZone(zoneRepository.getZoneById(2));
+		seats=seatRepository.getSeats(2,2);
+		seats.forEach(s -> s.setStatus(Status.HOLD));
+		hold2.setSeats(seats);
 		//zoneRepository.getZoneById(2).setAvailableSeatId(3);
 		
-		SeatHold hold3=new SeatHold(3, 3, Instant.now().minusSeconds(60));
+		SeatHold hold3=new SeatHold(3, 2, Instant.now().minusSeconds(60));
 		hold3.setUser(userRepository.getUserById(3));
 		hold3.setZone(zoneRepository.getZoneById(3));
+		seats=seatRepository.getSeats(3,2);
+		seats.forEach(s -> s.setStatus(Status.HOLD));
+		hold3.setSeats(seats);
 		//zoneRepository.getZoneById(3).setAvailableSeatId(4);
 		
-		listSeatHolds=Arrays.asList(hold1, hold2, hold3);
+		listSeatHolds=new ArrayList<SeatHold>();
+		listSeatHolds.add(hold1);
+		listSeatHolds.add(hold2);
+		listSeatHolds.add(hold3);
 	}
 	
 	
-	public List<SeatHold> getAllHolds(){
+	public Collection<SeatHold> getAllHolds(){
 		return listSeatHolds;
 	}
 	
@@ -64,11 +84,28 @@ public class SeatHoldRepository {
 		//Check if the hold has expired
 		long now = Instant.now().getEpochSecond();
 		
-		listSeatHolds.removeIf(x -> now-x.getHoldTime().getEpochSecond() >  seatHoldExpireTime);
+		try {
+			Iterator<SeatHold> iter = listSeatHolds.iterator();
+			while (iter.hasNext()) {
+			  SeatHold sh = iter.next();
+			  if (now-sh.getHoldTime().getEpochSecond() >  seatHoldExpireTime) iter.remove();
+			}
+			//listSeatHolds.removeIf(x -> now-x.getHoldTime().getEpochSecond() >  seatHoldExpireTime);
+		}
+		catch (Exception e)
+		{
+			System.out.println("Error during clear holds: " + e.getMessage());
+		}
+
+		System.out.println("Available Holds :" );
+		getAllHolds().forEach(h -> System.out.println("Id: " + h.getHoldId() + " ;User: " + h.getUser().getEmail() 
+				+ " ;No of seats:" + h.getNoOfSeats() + " in zone " + h.getZone().getName()));
+		
 	}
 	
 	public SeatHold holdSeats(int noOfSeats, String email) throws Exception {
 		clearExpiredHolds();
+		System.out.println("Clearing expired holds");
 		
 		//If no zone is provided, get the seats from best zone available.
 		List<Zone> zones=zoneRepository.getAllZones();
@@ -82,7 +119,7 @@ public class SeatHoldRepository {
 	    	int availableSeats=zoneRepository.getAvailableSeatCount(z.getId());
 	    	
 	    	//Hold seats if available
-	    	if (availableSeats>noOfSeats)
+	    	if (availableSeats>=noOfSeats)
 	    	{
 	    		return processHold(noOfSeats, email, z.getId());
 	    	}

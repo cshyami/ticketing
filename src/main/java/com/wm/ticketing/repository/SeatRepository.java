@@ -2,10 +2,10 @@ package com.wm.ticketing.repository;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.wm.ticketing.entities.Seat;
@@ -42,11 +42,15 @@ public class SeatRepository {
 	}
 	
 	public int getNoOfAvailableSeats() { 
-		System.out.println(seatList.size());
 		return (int) seatList.stream().filter(y -> y.getStatus()==Status.AVAILABLE).count();}
 	
 	public int getNoOfAvailableSeatsByZone(int zoneId) { 
 //		System.out.println(seatList.size());
 		return (int) seatList.stream().filter(y -> y.getStatus()==Status.AVAILABLE
 				&& y.getZoneId()==zoneId).count();}
+	
+	
+	public List<Seat> getSeats(int zoneId, int noOfSeats){
+		return ( seatList.stream().filter(x -> x.getZoneId()==zoneId).limit(noOfSeats).collect(Collectors.toList()));
+	}
 }

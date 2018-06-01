@@ -1,7 +1,6 @@
 package com.wm.ticketing.entities;
 
 import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 
 public class SeatHold {
